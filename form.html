@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_self">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+<style>
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+
+
+/* Overlay */
+#expiredOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#expiredOverlay > div {
+  background: #f8f8f8;
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 500px;
+  color: #333;
+}
+
+#expiredOverlay h2 {
+  color: #d9534f;
+  margin-bottom: 15px;
+}
+
+#expiredOverlay strong {
+  color: #007bff;
+}
+
+/* Quiz Form Container */
+.form-header {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px; /* must match */
+  background: #fff;
+  z-index: 1001;
+  padding: 1px 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 16px 16px 0 0;
+  text-align: center;
+}
+
+#quizFormContainer {
+  margin: 0 auto;
+  width: 600px; /* not just max-width */
+  padding: 160px 30px 30px;
+  background: #fff;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+#progressBarContainer {
+  width: 100%;
+  background-color: #f1f1f1;
+  border-radius: 5px;
+  margin: 10px 0 0 0;
+  box-sizing: border-box;
+}
+
+#progressBar {
+  width: 100%;
+  height: 10px;
+  background-color: #1e1a91;
+  border-radius: 5px;
+  transition: width 0.3s;
+}
+
+
+
+.quiz-subtext1, .quiz-subtext {
+  font-size: 16px;
+  color: #666;
+  margin: 8px 0;
+}
+
+
+#quizFormContainer label {
+  display: block;
+  margin-bottom: 8px;
+  color: #34495e;
+  font-weight: bold;
+}
+
+#quizFormContainer input[type="email"] {
+  width: 95%;
+  padding: 12px 14px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+/* Question Section */
+#questionContainer div {
+  margin-bottom: 12px;
+}
+
+#questionContainer label {
+  display: block;
+  margin: 5px 0;
+  cursor: pointer;
+  padding: 8px;
+  background: #f8f8f8;
+  border-radius: 5px;
+}
+
+/* Submit Button */
+#quizFormContainer button[type="submit"] {
+  background-color: #1e1a91;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 15px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+#quizFormContainer button[type="submit"]:hover {
+  border-radius: 20px;
+}
+
+/* Result Section */
+#resultSection {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 25px;
+  text-align: center;
+  display: none;
+}
+
+#scoreMessage {
+  font-size: 22px;
+  color: #1e1a91;
+}
+
+/* Progress */
+#progressBarContainer {
+  width: 100%;
+  background-color: #f1f1f1;
+  border-radius: 5px;
+  margin: 20px 0;
+}
+
+#progressBar {
+  height: 10px;
+  background-color: #1e1a91;
+  border-radius: 5px;
+  width: 0%;
+  transition: width 0.3s;
+}
+
+/* Hide Sections */
+#thankYouMessage, #resultSection, #loadingMessage, #errorMessage {
+  display: none;
+}
+
+.error {
+  color: red;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  #quizFormContainer {
+    padding: 180px 20px 20px;
+  }
+
+  .form-header {
+    padding: 15px 20px;
+  }
+
+  #quizFormContainer input[type="email"] {
+    font-size: 15px;
+  }
+}
+
+
+/* Loading Spinner */
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #1e1a91;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+  display: none;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.submitting-message {
+  text-align: center;
+  margin: 20px 0;
+  display: none;
+}
+</style>
+
+  </head>
+  <body>
+ <div id="expiredOverlay">
+  <div>
+    <h2>⏰ Time's Up!</h2>
+    <p>Contact us at <strong>thantzino1541999@gmail.com</strong></p>
+  </div>
+</div>
+
+<div id="quizFormContainer">
+  <form id="quizForm">
+    <div class="form-header">
+     <img src="https://i.imgur.com/S0n189P.png" height="45px " alt="FDB Bank|Digital Banking Excellence">
+      <p class="quiz-subtext1">Welcome to the Banking Knowledge Quiz</p>
+      <p><strong>Time left:</strong> <span id="timer"></span></p>
+      <div id="progressBarContainer">
+      <div id="progressBar"></div>
+      </div>
+       </div>
+
+   <label for="email">Enter your email:</label>
+<input type="email" id="email" required>
+<div id="emailErrorMessage" class="error" style="display: none;">❌ Invalid email format. Please enter a valid @fdbbank.com email address.</div>
+
+    <hr>
+
+    <div id="loadingMessage">Loading questions...</div>
+    <div id="errorMessage" class="error"></div>
+    <div id="questionContainer"></div>
+
+    <p class="quiz-subtext">⚠️ This form is for educational and informational purposes only.</p>
+    <button type="submit">Submit Quiz</button>
+
+    <div id="submittingMessage" class="submitting-message">
+  <div class="loader"></div>
+  <p>Submitting your answers...</p>
+</div>
+  </form>
+</div>
+
+<div id="thankYouMessage">
+  <p>✅ Your response has been submitted!</p>
+</div>
+
+<div id="resultSection">
+  <h3 id="scoreMessage"></h3>
+  <p id="passFailMessage"></p>
+</div>
+
+
+   <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize timer
+  const duration = 60; // 2 minutes
+const timerElement = document.getElementById("timer");
+const progressBar = document.getElementById("progressBar");
+
+function startTimer(endTime) {
+  const countdown = setInterval(() => {
+    // Check if completed first
+    if (localStorage.getItem("completed") === "true") {
+      clearInterval(countdown);
+      return;
+    }
+
+    const now = new Date().getTime();
+    const timeLeft = endTime - now;
+
+    if (timeLeft <= 0) {
+      clearInterval(countdown);
+      timerElement.textContent = "00:00";
+      // Only show expired if not already completed
+      if (localStorage.getItem("completed") !== "true") {
+        document.getElementById("quizForm").style.display = "none";
+        document.getElementById("expiredOverlay").style.display = "flex";
+        localStorage.setItem("expired", "true");
+      }
+
+      if (typeof autoSubmitAnswers === "function") {
+        autoSubmitAnswers();
+      }
+      return;
+    }
+
+    const minutes = Math.floor(timeLeft / 1000 / 60);
+    const seconds = Math.floor((timeLeft / 1000) % 60);
+    timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }, 1000);
+}
+
+
+function initTimer() {
+  if (localStorage.getItem("completed") === "true") {
+    // Show result section only, hide everything else
+    document.getElementById("quizFormContainer").style.display = "none";
+    document.getElementById("expiredOverlay").style.display = "none";
+    document.getElementById("resultSection").style.display = "block";
+    return; // Exit early since quiz is completed
+  }
+
+  const isExpired = localStorage.getItem("expired") === "true";
+  if (isExpired) {
+    timerElement.textContent = "00:00";
+    document.getElementById("quizForm").style.display = "none";
+    document.getElementById("expiredOverlay").style.display = "flex";
+    return;
+  }
+
+  let endTime = localStorage.getItem("endTime");
+
+  if (!endTime) {
+    const now = new Date().getTime();
+    endTime = now + duration * 1000;
+    localStorage.setItem("endTime", endTime);
+  } else {
+    endTime = parseInt(endTime);
+  }
+
+  startTimer(endTime);
+}
+
+// Call this when the page loads
+initTimer();
+  // Load questions
+  loadQuestions();
+
+  // Initialize progress bar
+  function updateProgress() {
+    const answered = document.querySelectorAll('input[type="radio"]:checked').length;
+    const totalQuestions = document.querySelectorAll('#questionContainer > div').length;
+    const progress = totalQuestions > 0 ? (answered / totalQuestions) * 100 : 0;
+    document.getElementById("progressBar").style.width = `${progress}%`;
+  }
+
+  // Add event listeners for radio buttons
+  document.addEventListener('change', function(e) {
+    if (e.target.matches('input[type="radio"]')) {
+      updateProgress();
+    }
+  });
+});
+
+function showLoading(show) {
+  document.getElementById('loadingMessage').style.display = show ? 'block' : 'none';
+}
+
+function showError(message) {
+  document.getElementById('errorMessage').textContent = message;
+  document.getElementById('errorMessage').style.display = 'block';
+}
+
+function loadQuestions() {
+  const savedQuestions = localStorage.getItem("quizQuestions");
+  if (savedQuestions) {
+    renderQuestions(JSON.parse(savedQuestions));
+    return;
+  }
+
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(questions => {
+      if (!questions || questions.length === 0) {
+        showError('No questions available');
+        return;
+      }
+      localStorage.setItem("quizQuestions", JSON.stringify(questions));
+      renderQuestions(questions);
+    })
+    .withFailureHandler(error => {
+      showError('Failed to load questions');
+      console.error(error);
+    })
+    .getRandomQuestions();
+}
+
+function renderQuestions(questions) {
+  const container = document.getElementById("questionContainer");
+  container.innerHTML = "";
+  
+  questions.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <strong>${i + 1}. ${q.question}</strong><br>
+      ${q.options.map(opt => `
+        <label>
+          <input type="radio" name="q${i}" value="${opt}" required>
+          ${opt}
+        </label><br>
+      `).join('')}
+    `;
+    container.appendChild(div);
+  });
+  showLoading(false);
+}
+
+
+  const emailInput = document.getElementById("email");
+  const emailErrorMessage = document.getElementById("emailErrorMessage");
+  const emailPattern = /^[a-z0-9]+@fdbbank\.com$/i;
+
+  // Check email format as the user types
+  emailInput.addEventListener("input", function() {
+    const email = emailInput.value.trim();
+
+    if (!emailPattern.test(email)) {
+      emailErrorMessage.style.display = "block";  // Show error message
+    } else {
+      emailErrorMessage.style.display = "none";   // Hide error message if email is valid
+    }
+  });
+
+  document.getElementById("quizForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const email = emailInput.value.trim();
+
+  if (!emailPattern.test(email)) {
+    alert("❌ Please enter a valid @fdbbank.com email address.");
+    return;
+  }
+
+  // Show submitting message and disable button
+  const submitBtn = this.querySelector("button[type='submit']");
+  submitBtn.disabled = true;
+  document.getElementById("submittingMessage").style.display = "block";
+
+  const answers = [];
+  document.querySelectorAll("#questionContainer > div").forEach((block, i) => {
+    const qText = block.querySelector("strong").textContent.replace(/^\d+\.\s*/, '').trim();
+    const selected = block.querySelector(`input[name="q${i}"]:checked`)?.value;
+    answers.push({ question: qText, answer: selected });
+  });
+
+  if (answers.some(a => !a.answer)) {
+    alert("❌ Please answer all questions before submitting.");
+    document.getElementById("submittingMessage").style.display = "none";
+    submitBtn.disabled = false;
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(function(response) {
+      document.getElementById("submittingMessage").style.display = "none";
+      showResults(response);
+    })
+    .withFailureHandler(function(error) {
+      document.getElementById("submittingMessage").style.display = "none";
+      submitBtn.disabled = false;
+      alert("Error submitting answers: " + error.message);
+    })
+    .submitAnswers({ email, answers });
+
+  localStorage.removeItem("timeLeft");
+  localStorage.removeItem("quizQuestions");
+});
+
+function autoSubmitAnswers() {
+  const email = document.getElementById("email").value.trim();
+  const emailPattern = /^[a-z0-9]+@fdbbank\.com$/i;
+
+  // Validate email format first
+  if (!emailPattern.test(email)) {
+    alert("❌ Time's up, but no valid @fdbbank.com email was provided. Answers were not saved.");
+    return;
+  }
+
+  // Check for duplicate via server-side
+  google.script.run
+    .withSuccessHandler((isDuplicate) => {
+      if (isDuplicate) {
+        alert("⏳ Time's up! Your email was already submitted previously.");
+        return;
+      }
+      
+      // Proceed with submission if not duplicate
+      const answers = [];
+      document.querySelectorAll("#questionContainer > div").forEach((block, i) => {
+        const qText = block.querySelector("strong").textContent.replace(/^\d+\.\s*/, '').trim();
+        const selected = block.querySelector(`input[name="q${i}"]:checked`)?.value || "Not answered";
+        answers.push({ question: qText, answer: selected });
+      });
+
+      google.script.run
+        .withSuccessHandler(() => {
+          alert("✅ Your answers were automatically submitted. You will receive results via email.");
+        })
+        .withFailureHandler(function(error) {
+          alert("❌ Auto-submit failed: " + error.message);
+        })
+        .submitAnswers({ email, answers });
+
+      localStorage.removeItem("timeLeft");
+      localStorage.removeItem("quizQuestions");
+    })
+    .withFailureHandler((error) => {
+      console.error("Duplicate check failed:", error);
+      alert("⚠️ Couldn't verify submission status. Your answers may have been recorded.");
+    })
+    .checkEmailDuplicate(email);
+}
+
+function showResults(response) {
+  if (response.status === "duplicate") {
+    alert(response.message);
+    return;
+  }
+
+  // Mark quiz as completed
+  localStorage.setItem("completed", "true");
+
+  // Hide both form and expired overlay
+  document.getElementById("expiredOverlay").style.display = "none";
+  document.getElementById("quizFormContainer").style.display = "none";
+
+  // Show result section
+  const resultSection = document.getElementById("resultSection");
+  resultSection.style.display = "block";
+
+  document.getElementById("scoreMessage").textContent = `Your Score: ${response.score}`;
+  
+  if (response.result === "Pass") {
+    document.getElementById("passFailMessage").innerHTML = "🌟 You're a star! Keep shining!";
+    createConfettiEffects();
+  } else {
+    document.getElementById("passFailMessage").innerHTML = "🛠️ Needs a Bit More Work – You Can Do It!";
+  }
+}
+
+
+function createConfettiEffects() {
+  function createConfetti() {
+    const confetti = document.createElement("div");
+    confetti.style.position = "fixed";
+    confetti.style.width = "10px";
+    confetti.style.height = "10px";
+    confetti.style.backgroundColor = getRandomColor();
+    confetti.style.left = Math.random() * 100 + "vw";
+    confetti.style.top = "-10px";
+    confetti.style.borderRadius = "50%";
+    confetti.style.zIndex = "9999";
+    document.body.appendChild(confetti);
+    
+    const animation = confetti.animate([
+      { top: "-10px", opacity: 1 },
+      { top: "100vh", opacity: 0 }
+    ], {
+      duration: Math.random() * 4000 + 5000,
+      easing: "cubic-bezier(0.2,0.8,0.9,1)"
+    });
+    
+    animation.onfinish = () => confetti.remove();
+  }
+
+  function getRandomColor() {
+    const colors = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff","#0959db","#db0992"];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  for(let i = 0; i < 100; i++) {
+    setTimeout(createConfetti, Math.random() * 2000);
+  }
+}
+</script>
+  </body>
+</html>
+
+
+
+
+
+
